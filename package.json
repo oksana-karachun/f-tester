@@ -1,0 +1,17 @@
+{
+  "name": "f-tester",
+  "version": "1.0.0",
+  "description": "",
+  "main": "js/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node js/index.js",
+    "tsc": "tsc",
+    "tsc:w": "tsc -w"
+  },
+  "author": "Oksana Karachun",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "5.4.5"
+  }
+}

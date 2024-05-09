@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "outDir": "./js",
+    "noImplicitAny": true,
+    "module": "ES6",
+    "lib": ["ES2019", "DOM"],
+    "target": "ES2019",
+    "allowJs": true,
+    "sourceMap": true,
+  },
+  "include": [
+    "ts/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "*.spec.ts"
+  ]
+}
