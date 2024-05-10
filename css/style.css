@@ -16,6 +16,7 @@ header {
 
 span, svg, .strategy {
   cursor: pointer;
+
     &:hover {
       color: white;
     }

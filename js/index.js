@@ -64,7 +64,6 @@ class Chart {
         this.barWidth = 15;
         this.lastMouseX = null;
         this.lastMouseY = null;
-        this.debounceTimer = 100;
         this.hoveredBar = null;
         this.handleWheel = (event) => {
             event.preventDefault();
@@ -96,6 +95,9 @@ class Chart {
         this.ctx = this.canvas.getContext('2d');
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
+        this.resizeCanvas(); // Виклик при створенні об'єкта
+        window.onload = () => this.resizeCanvas();
+        window.onresize = () => this.resizeCanvas();
         this.loadAndDraw();
         this.addEventListeners();
     }
@@ -127,7 +129,7 @@ class Chart {
     displayVolume(bar) {
         const volumeText = `Vol: ${bar.tickVolume.toLocaleString()}`;
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText(volumeText, 10, this.canvas.height - 10);
+        this.ctx.fillText(volumeText, 10, this.canvas.height - 100);
     }
     drawPriceScale() {
         const yMax = Math.max(...this.bars.map(bar => bar.high));
@@ -207,9 +209,14 @@ class Chart {
         this.ctx.setLineDash([]);
     }
     addEventListeners() {
+        this.canvas.addEventListener('resize', this.resizeCanvas);
         this.canvas.addEventListener('wheel', this.handleWheel);
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mouseleave', this.handleMouseLeave);
+    }
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     }
 }
 Chart.GRID_COLOR = '#2B2B43';

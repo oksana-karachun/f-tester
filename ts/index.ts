@@ -48,9 +48,6 @@ class Bar {
     }
 }
 
-
-
-
 interface Chunk {
     ChunkStart: number;
     Bars: BarData[];
@@ -86,7 +83,6 @@ class Chart {
     private visibleBars: number;
     private lastMouseX: number | null = null;
     private lastMouseY: number | null = null;
-    private debounceTimer: number = 100;
     private static readonly GRID_COLOR: string = '#2B2B43';
     private static readonly CROSSHAIR_COLOR: string = '#FFFFFF';
     private hoveredBar: Bar | null = null;
@@ -96,6 +92,9 @@ class Chart {
         this.ctx = this.canvas.getContext('2d');
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
+        this.resizeCanvas(); // Виклик при створенні об'єкта
+        window.onload = () => this.resizeCanvas();
+        window.onresize = () => this.resizeCanvas();
         this.loadAndDraw();
         this.addEventListeners();
     }
@@ -138,7 +137,7 @@ class Chart {
     private displayVolume(bar: Bar) {
         const volumeText = `Vol: ${bar.tickVolume.toLocaleString()}`;
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText(volumeText, 10, this.canvas.height - 10);
+        this.ctx.fillText(volumeText, 10, this.canvas.height - 100);
     }
 
     private drawPriceScale() {
@@ -232,9 +231,15 @@ class Chart {
     }
 
     private addEventListeners() {
+        this.canvas.addEventListener('resize', this.resizeCanvas);
         this.canvas.addEventListener('wheel', this.handleWheel);
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mouseleave', this.handleMouseLeave);
+    }
+
+    private resizeCanvas(): void {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     }
 
     private handleWheel = (event: WheelEvent) => {
