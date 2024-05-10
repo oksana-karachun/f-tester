@@ -21,7 +21,7 @@ class Bar {
         public timeOffset: number
     ) {}
 
-    draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string) {
+    draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string): void {
         const candleWidth = maxWidth * 0.6;
         this.xStart = x;
         this.width = candleWidth;
@@ -60,16 +60,11 @@ class DataLoader {
 
     public async loadData(): Promise<ChunkData> {
         const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return await response.json();
-        } catch (error) {
-            console.error("Failed to load data:", error);
-            throw error;
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
+        return response.json();
     }
 }
 
@@ -78,7 +73,6 @@ class Chart {
     private dataLoader: DataLoader;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private timeFrameCtx: CanvasRenderingContext2D;
     private offsetX: number = 0;
     private barWidth: number = 15;
     private visibleBars: number;
@@ -90,33 +84,41 @@ class Chart {
 
     constructor(canvasId: string, broker: string, symbol: string, timeframe: number, start: number, end: number) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
-        this.ctx = this.canvas.getContext('2d');
+        this.ctx = this.canvas.getContext('2d')!;
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
-        this.resizeCanvas();
+        this.initialize();
+    }
 
+    private async initialize(): Promise<void> {
+        this.resizeCanvas();
         window.onload = () => this.resizeCanvas();
         window.onresize = () => this.resizeCanvas();
-        this.loadAndDraw();
+        await this.loadAndDraw();
         this.addEventListeners();
     }
 
-    private async loadAndDraw() {
-        const chunks: ChunkData = await this.dataLoader.loadData();
+    private async loadAndDraw(): Promise<void> {
+        try {
+            const chunks: ChunkData = await this.dataLoader.loadData();
+            this.processData(chunks);
+            this.draw();
+        } catch (error) {
+            console.error("Data loading failed:", error);
+        }
+    }
+
+    private processData(chunks: ChunkData): void {
         const globalStartTime = Math.min(...chunks.map(chunk => chunk.ChunkStart));
-        this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => {
-            const absoluteTime = chunk.ChunkStart + barData.Time;
-            return new Bar(
-                new Date(absoluteTime * 1000),
-                barData.Open,
-                barData.High,
-                barData.Low,
-                barData.Close,
-                barData.TickVolume,
-                absoluteTime - globalStartTime
-            );
-        }));
-        this.draw();
+        this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => new Bar(
+            new Date(chunk.ChunkStart + barData.Time * 1000),
+            barData.Open,
+            barData.High,
+            barData.Low,
+            barData.Close,
+            barData.TickVolume,
+            chunk.ChunkStart + barData.Time - globalStartTime
+        )));
     }
 
     private draw(mouseX = this.lastMouseX, mouseY = this.lastMouseY) {

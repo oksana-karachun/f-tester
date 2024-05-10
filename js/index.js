@@ -42,17 +42,11 @@ class DataLoader {
     }
     async loadData() {
         const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
-        try {
-            const response = await fetch(url);
-            if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return await response.json();
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        catch (error) {
-            console.error("Failed to load data:", error);
-            throw error;
-        }
+        return response.json();
     }
 }
 class Chart {
@@ -115,20 +109,28 @@ class Chart {
         this.ctx = this.canvas.getContext('2d');
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
+        this.initialize();
+    }
+    async initialize() {
         this.resizeCanvas();
         window.onload = () => this.resizeCanvas();
         window.onresize = () => this.resizeCanvas();
-        this.loadAndDraw();
+        await this.loadAndDraw();
         this.addEventListeners();
     }
     async loadAndDraw() {
-        const chunks = await this.dataLoader.loadData();
+        try {
+            const chunks = await this.dataLoader.loadData();
+            this.processData(chunks);
+            this.draw();
+        }
+        catch (error) {
+            console.error("Data loading failed:", error);
+        }
+    }
+    processData(chunks) {
         const globalStartTime = Math.min(...chunks.map(chunk => chunk.ChunkStart));
-        this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => {
-            const absoluteTime = chunk.ChunkStart + barData.Time;
-            return new Bar(new Date(absoluteTime * 1000), barData.Open, barData.High, barData.Low, barData.Close, barData.TickVolume, absoluteTime - globalStartTime);
-        }));
-        this.draw();
+        this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => new Bar(new Date(chunk.ChunkStart + barData.Time * 1000), barData.Open, barData.High, barData.Low, barData.Close, barData.TickVolume, chunk.ChunkStart + barData.Time - globalStartTime)));
     }
     draw(mouseX = this.lastMouseX, mouseY = this.lastMouseY) {
         this.clearCanvas();
