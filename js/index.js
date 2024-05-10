@@ -1,4 +1,3 @@
-;
 class Bar {
     constructor(dateTime, open, high, low, close, tickVolume, timeOffset) {
         this.dateTime = dateTime;
@@ -31,7 +30,6 @@ class Bar {
         return overX >= this.xStart && overX <= this.xStart + this.width;
     }
 }
-;
 class DataLoader {
     constructor(baseUrl, broker, symbol, timeframe, start, end, useMessagePack = false) {
         this.baseUrl = baseUrl;
@@ -67,12 +65,25 @@ class Chart {
         this.hoveredBar = null;
         this.handleWheel = (event) => {
             event.preventDefault();
-            const scrollStep = 30;
-            if (event.deltaX < 0) {
-                this.offsetX = Math.max(0, this.offsetX - scrollStep);
+            const zoomIntensity = 0.1;
+            const scrollIntensity = 30;
+            if (event.shiftKey) {
+                let newWidth = this.barWidth;
+                if (event.deltaY < 0) {
+                    newWidth *= 1 + zoomIntensity;
+                }
+                else {
+                    newWidth *= 1 - zoomIntensity;
+                }
+                this.barWidth = Math.max(2, Math.min(67, newWidth));
             }
-            else if (event.deltaX > 0) {
-                this.offsetX = Math.min(this.offsetX + scrollStep, this.bars.length * this.barWidth - this.canvas.width);
+            else {
+                if (event.deltaX < 0) {
+                    this.offsetX = Math.max(0, this.offsetX - scrollIntensity);
+                }
+                else if (event.deltaX > 0) {
+                    this.offsetX = Math.min(this.offsetX + scrollIntensity, this.bars.length * this.barWidth - this.canvas.width);
+                }
             }
             window.requestAnimationFrame(() => this.draw());
         };
@@ -95,7 +106,7 @@ class Chart {
         this.ctx = this.canvas.getContext('2d');
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
-        this.resizeCanvas(); // Виклик при створенні об'єкта
+        this.resizeCanvas();
         window.onload = () => this.resizeCanvas();
         window.onresize = () => this.resizeCanvas();
         this.loadAndDraw();
@@ -181,20 +192,16 @@ class Chart {
         const yScale = this.canvas.height / yRange;
         const totalBars = this.bars.length;
         const availableWidth = this.canvas.width;
-        const maxBarWidth = 30;
-        const minBarWidth = 15;
-        let barWidth = Math.max(minBarWidth, availableWidth / totalBars);
-        barWidth = Math.min(maxBarWidth, barWidth);
-        const totalBarSpace = totalBars * barWidth;
+        const totalBarSpace = totalBars * this.barWidth;
         const maxOffsetX = Math.max(0, totalBarSpace - availableWidth);
         this.offsetX = Math.max(0, Math.min(this.offsetX, maxOffsetX));
-        const startIndex = Math.floor(this.offsetX / barWidth);
-        const endIndex = Math.min(totalBars, startIndex + Math.floor(availableWidth / barWidth));
+        const startIndex = Math.floor(this.offsetX / this.barWidth);
+        const endIndex = Math.min(totalBars, startIndex + Math.floor(availableWidth / this.barWidth));
         for (let i = startIndex; i < endIndex; i++) {
             const bar = this.bars[i];
-            const xPosition = (i - startIndex) * barWidth - (this.offsetX % barWidth);
+            const xPosition = (i - startIndex) * this.barWidth - (this.offsetX % this.barWidth);
             const color = bar.close > bar.open ? 'green' : 'red';
-            bar.draw(this.ctx, xPosition, yScale, yMax, barWidth, color);
+            bar.draw(this.ctx, xPosition, yScale, yMax, this.barWidth, color);
         }
     }
     drawCrosshair(x, y) {
@@ -217,6 +224,7 @@ class Chart {
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        this.draw();
     }
 }
 Chart.GRID_COLOR = '#2B2B43';
