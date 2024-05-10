@@ -63,30 +63,39 @@ class Chart {
         this.lastMouseX = null;
         this.lastMouseY = null;
         this.hoveredBar = null;
-        this.handleWheel = (event) => {
-            event.preventDefault();
+        this.handleWheel = (() => {
+            let lastExecutionTime = 0;
+            const throttleInterval = 50;
             const zoomIntensity = 0.1;
             const scrollIntensity = 30;
-            if (event.shiftKey) {
-                let newWidth = this.barWidth;
-                if (event.deltaY < 0) {
-                    newWidth *= 1 + zoomIntensity;
+            const handleZoom = (deltaY, width) => {
+                const newWidth = deltaY < 0 ? width * (1 + zoomIntensity) : width * (1 - zoomIntensity);
+                return Math.max(5, Math.min(67, newWidth));
+            };
+            const handleScroll = (deltaX, offsetX, totalWidth, canvasWidth) => {
+                if (deltaX < 0) {
+                    return Math.max(0, offsetX - scrollIntensity);
+                }
+                else if (deltaX > 0) {
+                    return Math.min(offsetX + scrollIntensity, totalWidth - canvasWidth);
+                }
+                return offsetX;
+            };
+            return (event) => {
+                const now = Date.now();
+                if (now - lastExecutionTime < throttleInterval)
+                    return;
+                event.preventDefault();
+                if (event.shiftKey) {
+                    this.barWidth = handleZoom(event.deltaY, this.barWidth);
                 }
                 else {
-                    newWidth *= 1 - zoomIntensity;
+                    this.offsetX = handleScroll(event.deltaX, this.offsetX, this.bars.length * this.barWidth, this.canvas.width);
                 }
-                this.barWidth = Math.max(2, Math.min(67, newWidth));
-            }
-            else {
-                if (event.deltaX < 0) {
-                    this.offsetX = Math.max(0, this.offsetX - scrollIntensity);
-                }
-                else if (event.deltaX > 0) {
-                    this.offsetX = Math.min(this.offsetX + scrollIntensity, this.bars.length * this.barWidth - this.canvas.width);
-                }
-            }
-            window.requestAnimationFrame(() => this.draw());
-        };
+                lastExecutionTime = now;
+                window.requestAnimationFrame(() => this.draw());
+            };
+        })();
         this.handleMouseMove = (event) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
@@ -140,7 +149,7 @@ class Chart {
     displayVolume(bar) {
         const volumeText = `Vol: ${bar.tickVolume.toLocaleString()}`;
         this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText(volumeText, 10, this.canvas.height - 100);
+        this.ctx.fillText(volumeText, 100, this.canvas.height - 50);
     }
     drawPriceScale() {
         const yMax = Math.max(...this.bars.map(bar => bar.high));
