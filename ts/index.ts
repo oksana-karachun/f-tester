@@ -107,13 +107,33 @@ class Chart {
     }
 
     private async loadAndDraw(): Promise<void> {
+        let timeoutId: number = window.setTimeout(() => {
+            this.displayLoadingMessage("Loading data...");
+        }, 1000);
+
         try {
             const chunks: ChunkData = await this.dataLoader.loadData(this.symbol);
+            window.clearTimeout(timeoutId);
             this.processData(chunks);
             this.draw();
         } catch (error) {
             console.error("Data loading failed:", error);
+            this.displayLoadingMessage("Failed to load data.");
+        } finally {
+            window.clearTimeout(timeoutId);
+            this.clearLoadingMessage();
         }
+    }
+
+    private displayLoadingMessage(message: string): void {
+        this.ctx.fillStyle = '#FFFFFF';
+        this.ctx.font = '16px Arial';
+        this.ctx.fillText(message, this.canvas.width / 2 - this.ctx.measureText(message).width / 2, this.canvas.height / 2);
+    }
+
+    private clearLoadingMessage(): void {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.draw();
     }
 
     private processData(chunks: ChunkData): void {
