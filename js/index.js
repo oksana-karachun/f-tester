@@ -58,6 +58,9 @@ class Chart {
         this.lastMousePosition = { x: null, y: null };
         this.hoveredBar = null;
         this.symbol = 'EURUSD';
+        this.dragging = false;
+        this.dragStartX = 0;
+        this.dragOffsetX = 0;
         this.handleWheel = (() => {
             let lastExecutionTime = 0;
             const throttleInterval = 50;
@@ -91,6 +94,15 @@ class Chart {
                 window.requestAnimationFrame(() => this.draw());
             };
         })();
+        this.handleMouseDown = (event) => {
+            const rect = this.canvas.getBoundingClientRect();
+            const scaleX = this.canvas.width / rect.width;
+            const mouseX = (event.clientX - rect.left) * scaleX;
+            this.dragging = true;
+            this.dragStartX = mouseX;
+            this.dragOffsetX = this.offsetX;
+            this.canvas.style.cursor = 'grabbing';
+        };
         this.handleMouseMove = (event) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
@@ -99,9 +111,19 @@ class Chart {
             const y = (event.clientY - rect.top) * scaleY;
             this.lastMousePosition.x = x;
             this.lastMousePosition.y = y;
+            if (this.dragging) {
+                const dx = x - this.dragStartX;
+                const newOffsetX = this.dragOffsetX - dx;
+                this.offsetX = Math.max(0, Math.min(newOffsetX, this.bars.length * this.barWidth - this.canvas.width));
+            }
             window.requestAnimationFrame(() => this.draw(x, y));
         };
+        this.handleMouseUp = () => {
+            this.dragging = false;
+            this.canvas.style.cursor = 'default';
+        };
         this.handleMouseLeave = () => {
+            this.dragging = false;
             this.lastMousePosition.x = null;
             this.lastMousePosition.y = null;
             this.draw();
@@ -284,6 +306,8 @@ class Chart {
         this.canvas.addEventListener('wheel', this.handleWheel);
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mouseleave', this.handleMouseLeave);
+        this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        this.canvas.addEventListener('mouseup', this.handleMouseUp);
     }
     resizeCanvas() {
         this.canvas.width = window.innerWidth;

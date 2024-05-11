@@ -82,6 +82,9 @@ class Chart {
     private static readonly CROSSHAIR_COLOR: string = '#FFFFFF';
     private hoveredBar: Bar | null = null;
     private symbol: string = 'EURUSD';
+    private dragging: boolean = false;
+    private dragStartX: number = 0;
+    private dragOffsetX: number = 0;
 
     constructor(canvasId: string, broker: string, symbol: string, timeframe: number, start: number, end: number) {
         if (this.isSmallScreen()) {
@@ -299,6 +302,9 @@ class Chart {
         this.canvas.addEventListener('wheel', this.handleWheel);
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mouseleave', this.handleMouseLeave);
+        this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        this.canvas.addEventListener('mouseup', this.handleMouseUp);
+
     }
 
     private resizeCanvas(): void {
@@ -343,6 +349,17 @@ class Chart {
         };
     })();
 
+    private handleMouseDown = (event: MouseEvent) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const scaleX = this.canvas.width / rect.width;
+        const mouseX = (event.clientX - rect.left) * scaleX;
+
+        this.dragging = true;
+        this.dragStartX = mouseX;
+        this.dragOffsetX = this.offsetX;
+        this.canvas.style.cursor = 'grabbing';
+    };
+
     private handleMouseMove = (event: MouseEvent) => {
         const rect = this.canvas.getBoundingClientRect();
         const scaleX = this.canvas.width / rect.width;
@@ -353,10 +370,22 @@ class Chart {
         this.lastMousePosition.x = x;
         this.lastMousePosition.y = y;
 
+        if (this.dragging) {
+            const dx = x - this.dragStartX;
+            const newOffsetX = this.dragOffsetX - dx;
+            this.offsetX = Math.max(0, Math.min(newOffsetX, this.bars.length * this.barWidth - this.canvas.width));
+        }
+
         window.requestAnimationFrame(() => this.draw(x, y));
     }
 
+    private handleMouseUp = () => {
+        this.dragging = false;
+        this.canvas.style.cursor = 'default';
+    };
+
     private handleMouseLeave = () => {
+        this.dragging = false;
         this.lastMousePosition.x = null;
         this.lastMousePosition.y = null;
         this.draw();
