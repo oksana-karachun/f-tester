@@ -55,8 +55,7 @@ class Chart {
         this.bars = [];
         this.offsetX = 0;
         this.barWidth = 15;
-        this.lastMouseX = null;
-        this.lastMouseY = null;
+        this.lastMousePosition = { x: null, y: null };
         this.hoveredBar = null;
         this.symbol = 'EURUSD';
         this.handleWheel = (() => {
@@ -98,13 +97,13 @@ class Chart {
             const scaleY = this.canvas.height / rect.height;
             const x = (event.clientX - rect.left) * scaleX;
             const y = (event.clientY - rect.top) * scaleY;
-            this.lastMouseX = x;
-            this.lastMouseY = y;
+            this.lastMousePosition.x = x;
+            this.lastMousePosition.y = y;
             window.requestAnimationFrame(() => this.draw(x, y));
         };
         this.handleMouseLeave = () => {
-            this.lastMouseX = null;
-            this.lastMouseY = null;
+            this.lastMousePosition.x = null;
+            this.lastMousePosition.y = null;
             this.draw();
         };
         this.canvas = document.getElementById(canvasId);
@@ -140,7 +139,7 @@ class Chart {
         const globalStartTime = Math.min(...chunks.map(chunk => chunk.ChunkStart));
         this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => new Bar(new Date(chunk.ChunkStart + barData.Time * 1000), barData.Open, barData.High, barData.Low, barData.Close, barData.TickVolume, chunk.ChunkStart + barData.Time - globalStartTime)));
     }
-    draw(mouseX = this.lastMouseX, mouseY = this.lastMouseY) {
+    draw(mouseX, mouseY) {
         this.clearCanvas();
         this.drawGrid();
         this.drawBars();

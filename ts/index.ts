@@ -77,8 +77,7 @@ class Chart {
     private offsetX: number = 0;
     private barWidth: number = 15;
     private visibleBars: number;
-    private lastMouseX: number | null = null;
-    private lastMouseY: number | null = null;
+    private lastMousePosition: { x: number | null; y: number | null } = { x: null, y: null };
     private static readonly GRID_COLOR: string = '#2B2B43';
     private static readonly CROSSHAIR_COLOR: string = '#FFFFFF';
     private hoveredBar: Bar | null = null;
@@ -130,7 +129,7 @@ class Chart {
         )));
     }
 
-    private draw(mouseX = this.lastMouseX, mouseY = this.lastMouseY) {
+    private draw(mouseX?: number, mouseY?: number) {
         this.clearCanvas();
         this.drawGrid();
         this.drawBars();
@@ -317,15 +316,15 @@ class Chart {
         const x = (event.clientX - rect.left) * scaleX;
         const y = (event.clientY - rect.top) * scaleY;
 
-        this.lastMouseX = x;
-        this.lastMouseY = y;
+        this.lastMousePosition.x = x;
+        this.lastMousePosition.y = y;
 
         window.requestAnimationFrame(() => this.draw(x, y));
     }
 
     private handleMouseLeave = () => {
-        this.lastMouseX = null;
-        this.lastMouseY = null;
+        this.lastMousePosition.x = null;
+        this.lastMousePosition.y = null;
         this.draw();
     }
 }
