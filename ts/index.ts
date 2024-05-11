@@ -156,7 +156,7 @@ class Chart {
     private processData(chunks: ChunkData): void {
         const globalStartTime = Math.min(...chunks.map(chunk => chunk.ChunkStart));
         this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => new Bar(
-            new Date(chunk.ChunkStart + barData.Time * 1000),
+            new Date((chunk.ChunkStart + barData.Time) * 1000),
             barData.Open,
             barData.High,
             barData.Low,
@@ -177,17 +177,31 @@ class Chart {
             this.drawCrosshair(mouseX, mouseY);
             this.hoveredBar = this.bars.find(bar => bar.isHovering(mouseX));
             if (this.hoveredBar) {
-                this.displayVolume(this.hoveredBar);
+                this.displayBarInfo(this.hoveredBar);
             }
         } else {
             this.hoveredBar = null;
         }
     }
 
-    private displayVolume(bar: Bar) {
-        const volumeText = `Vol: ${bar.tickVolume.toLocaleString()}`;
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.fillText(volumeText, 100, this.canvas.height - 50);
+    private displayBarInfo(bar: Bar) {
+        const barDetails = [
+            `Vol: ${bar.tickVolume.toLocaleString()}`,
+            `Date: ${bar.dateTime.toLocaleString()}`,
+            `Price: ${bar.close.toLocaleString()}`
+        ];
+
+        const edgePadding = 200;
+        const totalTextWidth = barDetails.reduce((totalWidth, text) => totalWidth + this.ctx.measureText(text).width, 0);
+        const remainingSpace = this.canvas.width - totalTextWidth - edgePadding * 2;
+        const spacing = remainingSpace / (barDetails.length - 1);
+
+        let xPosition = edgePadding;
+        barDetails.forEach((text, index) => {
+            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.fillText(text, xPosition, this.canvas.height - 50);
+            xPosition += this.ctx.measureText(text).width + (index < barDetails.length - 1 ? spacing : 0);
+        });
     }
 
     private drawPriceScale() {
@@ -245,13 +259,11 @@ class Chart {
         const yMin = Math.min(...this.bars.map(bar => bar.low));
         const yRange = yMax - yMin;
         const yScale = this.canvas.height / yRange;
-
         const totalBars = this.bars.length;
         const availableWidth = this.canvas.width;
 
         const totalBarSpace = totalBars * this.barWidth;
         const maxOffsetX = Math.max(0, totalBarSpace - availableWidth);
-
         this.offsetX = Math.max(0, Math.min(this.offsetX, maxOffsetX));
 
         const startIndex = Math.floor(this.offsetX / this.barWidth);
