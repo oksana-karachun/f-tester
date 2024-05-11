@@ -47,7 +47,7 @@ ul, li {
 .header__list {
   display: none;
   position: absolute;
-  top: 20px;
+  top: 17px;
   width: 150px;
   background: var(--background-color);
   border: 1px solid var(--border-color);

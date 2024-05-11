@@ -259,7 +259,7 @@ class Chart {
     }
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        this.canvas.height = window.innerHeight - 50;
         this.draw();
     }
 }
