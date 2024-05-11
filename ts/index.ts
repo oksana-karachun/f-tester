@@ -84,6 +84,16 @@ class Chart {
     private symbol: string = 'EURUSD';
 
     constructor(canvasId: string, broker: string, symbol: string, timeframe: number, start: number, end: number) {
+        if (this.isSmallScreen()) {
+            alert("The mobile version of this page is not available. Please access this page from a desktop.");
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'warning';
+            messageDiv.textContent = 'The mobile version of this page is not available. Please access this page from a desktop.';
+
+            document.body.appendChild(messageDiv);
+            return;
+        }
+
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
         this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
@@ -104,6 +114,10 @@ class Chart {
             this.symbol = newSymbol;
             await this.loadAndDraw();
         }
+    }
+
+    private isSmallScreen() {
+        return window.innerWidth < 800 || window.innerHeight < 600;
     }
 
     private async loadAndDraw(): Promise<void> {
