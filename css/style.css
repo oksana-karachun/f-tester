@@ -1,6 +1,7 @@
 :root {
   --background-color: #131722;
   --text-color: #d1d4dc;
+  --disabled-color: #75757e;
   --hover-text-color: white;
   --border-color: #ccc;
   --font-family: Montserrat, sans-serif;
@@ -19,7 +20,7 @@ ul, li {
   list-style: none;
 }
 
-header {
+.header {
   display: flex;
   gap: var(--base-spacing);
   background-color: var(--background-color);
@@ -28,39 +29,43 @@ header {
   align-items: center;
 }
 
-span, svg, .strategy, .hot-keys {
+.header__title, .header__icon, .header__time, .header__section, .header__section-name {
   cursor: pointer;
 }
 
-span:hover, svg:hover, .strategy:hover {
+.header__title:hover, .header__icon:hover, .header__time:hover, .header__section:hover, .header__section-name:hover {
   color: var(--hover-text-color);
 }
 
-.strategy {
+.header__section {
   display: flex;
+  position: relative;
   gap: 5px;
   align-items: center;
 }
 
-.hot-keys {
-  position: relative;
-}
-
-.hot-keys:hover .hotKeysList {
-  display: block;
-}
-
-.hotKeysList {
-  position: absolute;
+.header__list {
   display: none;
+  position: absolute;
+  top: 20px;
   width: 150px;
-  z-index: 10;
-  background: var(--hover-text-color);
+  background: var(--background-color);
   border: 1px solid var(--border-color);
   padding: 10px;
+  z-index: 10;
 }
 
-.title {
+.header__section:hover {
+  .header__list {
+    display: block;
+  }
+}
+
+.header__section--disabled {
+  color: var(--disabled-color);
+}
+
+.header__title {
   font-size: 16px;
   font-weight: bold;
 }

@@ -58,7 +58,8 @@ interface ChunkData extends Array<Chunk> {}
 class DataLoader {
     constructor(private baseUrl: string, private broker: string, private symbol: string, private timeframe: number, private start: number, private end: number, private useMessagePack: boolean = false) {}
 
-    public async loadData(): Promise<ChunkData> {
+    public async loadData(symbol: string): Promise<ChunkData> {
+        this.symbol = symbol;
         const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
         const response = await fetch(url);
         if (!response.ok) {
@@ -81,6 +82,7 @@ class Chart {
     private static readonly GRID_COLOR: string = '#2B2B43';
     private static readonly CROSSHAIR_COLOR: string = '#FFFFFF';
     private hoveredBar: Bar | null = null;
+    private symbol: string = 'EURUSD';
 
     constructor(canvasId: string, broker: string, symbol: string, timeframe: number, start: number, end: number) {
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -98,9 +100,16 @@ class Chart {
         this.addEventListeners();
     }
 
+    public async changeMarket(newSymbol: string) {
+        if (newSymbol !== this.symbol) {
+            this.symbol = newSymbol;
+            await this.loadAndDraw();
+        }
+    }
+
     private async loadAndDraw(): Promise<void> {
         try {
-            const chunks: ChunkData = await this.dataLoader.loadData();
+            const chunks: ChunkData = await this.dataLoader.loadData(this.symbol);
             this.processData(chunks);
             this.draw();
         } catch (error) {
@@ -322,3 +331,5 @@ class Chart {
 }
 
 const chart = new Chart('chartCanvas', 'Advanced', 'EURUSD', 1, 57674, 59113);
+document.getElementById('marketUSDJPY').addEventListener('click', () => chart.changeMarket('USDJPY'));
+document.getElementById('marketEURUSD').addEventListener('click', () => chart.changeMarket('EURUSD'));

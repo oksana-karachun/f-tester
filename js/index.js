@@ -40,7 +40,8 @@ class DataLoader {
         this.end = end;
         this.useMessagePack = useMessagePack;
     }
-    async loadData() {
+    async loadData(symbol) {
+        this.symbol = symbol;
         const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
         const response = await fetch(url);
         if (!response.ok) {
@@ -57,6 +58,7 @@ class Chart {
         this.lastMouseX = null;
         this.lastMouseY = null;
         this.hoveredBar = null;
+        this.symbol = 'EURUSD';
         this.handleWheel = (() => {
             let lastExecutionTime = 0;
             const throttleInterval = 50;
@@ -118,9 +120,15 @@ class Chart {
         await this.loadAndDraw();
         this.addEventListeners();
     }
+    async changeMarket(newSymbol) {
+        if (newSymbol !== this.symbol) {
+            this.symbol = newSymbol;
+            await this.loadAndDraw();
+        }
+    }
     async loadAndDraw() {
         try {
-            const chunks = await this.dataLoader.loadData();
+            const chunks = await this.dataLoader.loadData(this.symbol);
             this.processData(chunks);
             this.draw();
         }
@@ -258,4 +266,6 @@ class Chart {
 Chart.GRID_COLOR = '#2B2B43';
 Chart.CROSSHAIR_COLOR = '#FFFFFF';
 const chart = new Chart('chartCanvas', 'Advanced', 'EURUSD', 1, 57674, 59113);
+document.getElementById('marketUSDJPY').addEventListener('click', () => chart.changeMarket('USDJPY'));
+document.getElementById('marketEURUSD').addEventListener('click', () => chart.changeMarket('EURUSD'));
 //# sourceMappingURL=index.js.map
