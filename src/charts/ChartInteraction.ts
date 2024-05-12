@@ -37,20 +37,23 @@ export class ChartInteraction {
     }
 
     private handleZoom(deltaY: number): number {
-        const newWidth = deltaY < 0 ? this.chartRenderer.getBarWidth() * (1 + this.zoomIntensity) : this.chartRenderer.getBarWidth() * (1 - this.zoomIntensity);
+        const barWidth = this.chartRenderer.getBarWidth();
+        const zoomFactor = deltaY < 0 ? 1 + this.zoomIntensity : 1 - this.zoomIntensity;
+        const newWidth = barWidth * zoomFactor;
+
         return Math.max(5, Math.min(67, newWidth));
     }
 
     private handleScroll(deltaX: number): number {
-        if (deltaX < 0) {
-            return Math.max(0, this.chartRenderer.getOffsetX() - this.scrollIntensity);
-        } else if (deltaX > 0) {
-            return Math.min(this.chartRenderer.getOffsetX() + this.scrollIntensity, this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width);
-        }
-        return this.chartRenderer.getOffsetX();
+        const currentOffsetX = this.chartRenderer.getOffsetX();
+        const maxOffsetX = this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width;
+
+        return deltaX < 0
+            ? Math.max(0, currentOffsetX - this.scrollIntensity)
+            : Math.min(currentOffsetX + this.scrollIntensity, maxOffsetX);
     }
 
-    public handleWheel(event: WheelEvent): void {
+    private handleWheel(event: WheelEvent): void {
 
         const now = Date.now();
         if (now - this.lastExecutionTime < this.throttleInterval) return;
@@ -90,7 +93,8 @@ export class ChartInteraction {
         if (this.dragging) {
             const dx = x - this.dragStartX;
             const newOffsetX = this.dragOffsetX - dx;
-            this.chartRenderer.setOffsetX(Math.max(0, Math.min(newOffsetX, this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width)));
+            const maxOffsetX = this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width;
+            this.chartRenderer.setOffsetX(Math.max(0, Math.min(newOffsetX, maxOffsetX)));
         }
 
         window.requestAnimationFrame(() => this.chartRenderer.render(x, y));
