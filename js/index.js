@@ -64,39 +64,10 @@ class Chart {
         this.dragging = false;
         this.dragStartX = 0;
         this.dragOffsetX = 0;
-        this.handleWheel = (() => {
-            let lastExecutionTime = 0;
-            const throttleInterval = 50;
-            const zoomIntensity = 0.1;
-            const scrollIntensity = 30;
-            const handleZoom = (deltaY, width) => {
-                const newWidth = deltaY < 0 ? width * (1 + zoomIntensity) : width * (1 - zoomIntensity);
-                return Math.max(5, Math.min(67, newWidth));
-            };
-            const handleScroll = (deltaX, offsetX, totalWidth, canvasWidth) => {
-                if (deltaX < 0) {
-                    return Math.max(0, offsetX - scrollIntensity);
-                }
-                else if (deltaX > 0) {
-                    return Math.min(offsetX + scrollIntensity, totalWidth - canvasWidth);
-                }
-                return offsetX;
-            };
-            return (event) => {
-                const now = Date.now();
-                if (now - lastExecutionTime < throttleInterval)
-                    return;
-                event.preventDefault();
-                if (event.shiftKey) {
-                    this.barWidth = handleZoom(event.deltaY, this.barWidth);
-                }
-                else {
-                    this.offsetX = handleScroll(event.deltaX, this.offsetX, this.bars.length * this.barWidth, this.canvas.width);
-                }
-                lastExecutionTime = now;
-                window.requestAnimationFrame(() => this.draw());
-            };
-        })();
+        this.lastExecutionTime = 0;
+        this.throttleInterval = 50;
+        this.zoomIntensity = 0.1;
+        this.scrollIntensity = 30;
         this.handleMouseDown = (event) => {
             const rect = this.canvas.getBoundingClientRect();
             const scaleX = this.canvas.width / rect.width;
@@ -143,6 +114,7 @@ class Chart {
         this.ctx = this.canvas.getContext('2d');
         this.dataLoader = new DataLoader({ broker, symbol, timeframe, start, end });
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
+        this.handleWheel = this.handleWheel.bind(this);
         this.initialize();
     }
     async initialize() {
@@ -328,6 +300,33 @@ class Chart {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight - 50;
         this.draw();
+    }
+    handleZoom(deltaY) {
+        const newWidth = deltaY < 0 ? this.barWidth * (1 + this.zoomIntensity) : this.barWidth * (1 - this.zoomIntensity);
+        return Math.max(5, Math.min(67, newWidth));
+    }
+    handleScroll(deltaX) {
+        if (deltaX < 0) {
+            return Math.max(0, this.offsetX - this.scrollIntensity);
+        }
+        else if (deltaX > 0) {
+            return Math.min(this.offsetX + this.scrollIntensity, this.bars.length * this.barWidth - this.canvas.width);
+        }
+        return this.offsetX;
+    }
+    handleWheel(event) {
+        const now = Date.now();
+        if (now - this.lastExecutionTime < this.throttleInterval)
+            return;
+        event.preventDefault();
+        if (event.shiftKey) {
+            this.barWidth = this.handleZoom(event.deltaY);
+        }
+        else {
+            this.offsetX = this.handleScroll(event.deltaX);
+        }
+        this.lastExecutionTime = now;
+        window.requestAnimationFrame(() => this.draw());
     }
 }
 Chart.GRID_COLOR = '#2B2B43';

@@ -115,6 +115,10 @@ class Chart {
     private dragging: boolean = false;
     private dragStartX: number = 0;
     private dragOffsetX: number = 0;
+    private lastExecutionTime: number = 0;
+    private readonly throttleInterval: number = 50;
+    private readonly zoomIntensity: number = 0.1;
+    private readonly scrollIntensity: number = 30;
 
     constructor(canvasId: string, broker: string, symbol: string, timeframe: number, start: number, end: number) {
         if (this.isSmallScreen()) {
@@ -131,6 +135,7 @@ class Chart {
         this.ctx = this.canvas.getContext('2d')!;
         this.dataLoader = new DataLoader({broker, symbol, timeframe, start, end});
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
+        this.handleWheel = this.handleWheel.bind(this);
         this.initialize();
     }
 
@@ -355,41 +360,35 @@ class Chart {
         this.draw()
     }
 
-    private handleWheel = (() => {
-        let lastExecutionTime = 0;
-        const throttleInterval = 50;
-        const zoomIntensity = 0.1;
-        const scrollIntensity = 30;
+    private handleZoom(deltaY: number): number {
+        const newWidth = deltaY < 0 ? this.barWidth * (1 + this.zoomIntensity) : this.barWidth * (1 - this.zoomIntensity);
+        return Math.max(5, Math.min(67, newWidth));
+    }
 
-        const handleZoom = (deltaY: number, width: number) => {
-            const newWidth = deltaY < 0 ? width * (1 + zoomIntensity) : width * (1 - zoomIntensity);
-            return Math.max(5, Math.min(67, newWidth));
-        };
+    private handleScroll(deltaX: number): number {
+        if (deltaX < 0) {
+            return Math.max(0, this.offsetX - this.scrollIntensity);
+        } else if (deltaX > 0) {
+            return Math.min(this.offsetX + this.scrollIntensity, this.bars.length * this.barWidth - this.canvas.width);
+        }
+        return this.offsetX;
+    }
 
-        const handleScroll = (deltaX: number, offsetX: number, totalWidth: number, canvasWidth: number) => {
-            if (deltaX < 0) {
-                return Math.max(0, offsetX - scrollIntensity);
-            } else if (deltaX > 0) {
-                return Math.min(offsetX + scrollIntensity, totalWidth - canvasWidth);
-            }
-            return offsetX;
-        };
+    public handleWheel(event: WheelEvent): void {
 
-        return (event: WheelEvent) => {
-            const now = Date.now();
-            if (now - lastExecutionTime < throttleInterval) return;
+        const now = Date.now();
+        if (now - this.lastExecutionTime < this.throttleInterval) return;
 
-            event.preventDefault();
-            if (event.shiftKey) {
-                this.barWidth = handleZoom(event.deltaY, this.barWidth);
-            } else {
-                this.offsetX = handleScroll(event.deltaX, this.offsetX, this.bars.length * this.barWidth, this.canvas.width);
-            }
+        event.preventDefault();
+        if (event.shiftKey) {
+            this.barWidth = this.handleZoom(event.deltaY);
+        } else {
+            this.offsetX = this.handleScroll(event.deltaX);
+        }
 
-            lastExecutionTime = now;
-            window.requestAnimationFrame(() => this.draw());
-        };
-    })();
+        this.lastExecutionTime = now;
+        window.requestAnimationFrame(() => this.draw());
+    }
 
     private handleMouseDown = (event: MouseEvent) => {
         const rect = this.canvas.getBoundingClientRect();
