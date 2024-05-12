@@ -52,7 +52,8 @@ class DataLoader {
     }
 }
 DataLoader.BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';
-// ---DataLoader END--- //
+// ---Chunk END--- //
+// ---Chart START--- //
 class Chart {
     constructor(canvasId, broker, symbol, timeframe, start, end) {
         this.bars = [];
@@ -331,6 +332,7 @@ class Chart {
 }
 Chart.GRID_COLOR = '#2B2B43';
 Chart.CROSSHAIR_COLOR = '#FFFFFF';
+// ---Chart END--- //
 const chart = new Chart('chartCanvas', 'Advanced', 'EURUSD', 1, 57674, 59113);
 document.getElementById('marketUSDJPY').addEventListener('click', () => chart.changeMarket('USDJPY'));
 document.getElementById('marketEURUSD').addEventListener('click', () => chart.changeMarket('EURUSD'));

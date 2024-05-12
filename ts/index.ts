@@ -1,3 +1,4 @@
+// ---Bar START--- //
 interface BarData {
     Time: number;
     Open: number;
@@ -47,13 +48,7 @@ class Bar {
         return overX >= this.xStart && overX <= this.xStart + this.width;
     }
 }
-
-interface Chunk {
-    ChunkStart: number;
-    Bars: BarData[];
-}
-
-interface ChunkData extends Array<Chunk> {}
+// ---Bar END--- //
 
 // ---DataLoader START--- //
 interface DataLoaderConfig {
@@ -99,6 +94,16 @@ class DataLoader {
 }
 // ---DataLoader END--- //
 
+// ---Chunk START--- //
+interface Chunk {
+    ChunkStart: number;
+    Bars: BarData[];
+}
+
+interface ChunkData extends Array<Chunk> {}
+// ---Chunk END--- //
+
+// ---Chart START--- //
 class Chart {
     private bars: Bar[] = [];
     private dataLoader: DataLoader;
@@ -432,6 +437,7 @@ class Chart {
         this.draw();
     }
 }
+// ---Chart END--- //
 
 const chart = new Chart('chartCanvas', 'Advanced', 'EURUSD', 1, 57674, 59113);
 document.getElementById('marketUSDJPY').addEventListener('click', () => chart.changeMarket('USDJPY'));
