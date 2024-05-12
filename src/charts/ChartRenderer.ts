@@ -2,8 +2,12 @@ import { ChartData } from "./ChartData";
 import { Bar } from "../models/Bar";
 
 export class ChartRenderer {
-    private static readonly CROSSHAIR_COLOR: string = '#FFFFFF';
-    private static readonly GRID_COLOR: string = '#2B2B43';
+    private static readonly CROSSHAIR_COLOR = '#FFFFFF';
+    private static readonly GRID_COLOR = '#2B2B43';
+    private static readonly CANVAS_BACKGROUND_COLOR = '#131722';
+    private static readonly SCALE_COLOR = '#666';
+    private static readonly TEXT_COLOR = '#FFFFFF';
+    private static readonly TEXT_FONT = '12px Arial';
     private ctx: CanvasRenderingContext2D;
     private canvas: HTMLCanvasElement;
     private chartData: ChartData;
@@ -44,27 +48,28 @@ export class ChartRenderer {
         this.drawPriceScale();
         this.drawTimeFrame();
 
-        if (mouseX !== null && mouseY !== null) {
+        if (mouseX !== undefined && mouseY !== undefined) {
             this.drawCrosshair(mouseX, mouseY);
             this.hoveredBar = this.chartData.getBars().find(bar => bar.isHovering(mouseX));
-            if (this.hoveredBar) {
-                this.displayBarInfo(this.hoveredBar);
-            }
+            this.hoveredBar && this.displayBarInfo(this.hoveredBar);
         } else {
             this.hoveredBar = null;
         }
     }
 
     private clearCanvas() {
-        this.ctx.fillStyle = '#131722';
+        this.ctx.fillStyle = ChartRenderer.CANVAS_BACKGROUND_COLOR;
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
 
     private drawGrid() {
+        const gridSpacingX = 100;
+        const gridSpacingY = 50;
+
         this.ctx.strokeStyle = ChartRenderer.GRID_COLOR;
         this.ctx.lineWidth = 1;
-        this.drawLines(this.canvas.width, 100, true);
-        this.drawLines(this.canvas.height, 50, false);
+        this.drawLines(this.canvas.width, gridSpacingX, true);
+        this.drawLines(this.canvas.height, gridSpacingY, false);
     }
 
     private drawLines(limit: number, spacing: number, isVertical: boolean) {
@@ -112,8 +117,8 @@ export class ChartRenderer {
         const startIndex = Math.floor(this.offsetX / this.barWidth);
         const endIndex = Math.min(bars.length, startIndex + Math.floor(this.canvas.width / this.barWidth));
 
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '12px Arial';
+        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this.ctx.font = ChartRenderer.TEXT_FONT;
         this.ctx.textAlign = 'center';
 
         for (let i = startIndex; i < endIndex; i += skipTicks) {
@@ -146,8 +151,8 @@ export class ChartRenderer {
         const scaleSteps = 5;
         const stepValue = range / scaleSteps;
 
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '12px Arial';
+        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this.ctx.font = ChartRenderer.TEXT_FONT;
 
         for (let i = 0; i <= scaleSteps; i++) {
             const price = yMin + i * stepValue;
@@ -158,7 +163,7 @@ export class ChartRenderer {
             this.ctx.beginPath();
             this.ctx.moveTo(70, y);
             this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.strokeStyle = '#666';
+            this.ctx.strokeStyle = ChartRenderer.SCALE_COLOR;
             this.ctx.stroke();
         }
     }
@@ -177,7 +182,7 @@ export class ChartRenderer {
 
         let xPosition = edgePadding;
         barDetails.forEach((text, index) => {
-            this.ctx.fillStyle = '#FFFFFF';
+            this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
             this.ctx.fillText(text, xPosition, this.canvas.height - 50);
             xPosition += this.ctx.measureText(text).width + (index < barDetails.length - 1 ? spacing : 0);
         });
