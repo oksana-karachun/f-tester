@@ -1,15 +1,18 @@
 {
   "compilerOptions": {
-    "outDir": "./js",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "module": "commonjs",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
     "noImplicitAny": true,
-    "module": "ES6",
     "lib": ["ES2019", "DOM"],
     "target": "ES2019",
     "allowJs": true,
     "sourceMap": true,
   },
   "include": [
-    "ts/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -2,16 +2,20 @@
   "name": "f-tester",
   "version": "1.0.0",
   "description": "",
-  "main": "js/index.js",
+  "main": "dist/app.js",
   "type": "module",
   "scripts": {
-    "start": "node js/index.js",
-    "tsc": "tsc",
-    "tsc:w": "tsc -w"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "author": "Oksana Karachun",
   "license": "ISC",
   "devDependencies": {
     "typescript": "5.4.5"
+  },
+  "dependencies": {
+    "vite": "5.2.11",
+    "vite-tsconfig-paths": "4.3.2"
   }
 }

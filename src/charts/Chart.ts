@@ -1,110 +1,8 @@
-// ---Bar START--- //
-interface BarData {
-    Time: number;
-    Open: number;
-    High: number;
-    Low: number;
-    Close: number;
-    TickVolume: number;
-}
+import { Bar } from '../models/Bar';
+import { ChunkData } from '../models/ChartDataTypes';
+import { DataLoader } from '../services/DataLoader';
 
-class Bar {
-    private xStart: number;
-    private width: number;
-
-    constructor(
-        public dateTime: Date,
-        public open: number,
-        public high: number,
-        public low: number,
-        public close: number,
-        public tickVolume: number,
-        public timeOffset: number
-    ) {}
-
-    draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string): void {
-        const candleWidth = maxWidth * 0.6;
-        this.xStart = x;
-        this.width = candleWidth;
-
-        const pixelForHigh = (yMax - this.high) * yScale;
-        const pixelForLow = (yMax - this.low) * yScale;
-        const pixelForOpen = (yMax - this.open) * yScale;
-        const pixelForClose = (yMax - this.close) * yScale;
-
-        ctx.fillStyle = color;
-        ctx.fillRect(this.xStart, Math.min(pixelForOpen, pixelForClose), candleWidth, Math.abs(pixelForClose - pixelForOpen));
-
-        ctx.beginPath();
-        ctx.moveTo(x + candleWidth / 2, pixelForHigh);
-        ctx.lineTo(x + candleWidth / 2, Math.min(pixelForOpen, pixelForClose));
-        ctx.moveTo(x + candleWidth / 2, pixelForLow);
-        ctx.lineTo(x + candleWidth / 2, Math.max(pixelForOpen, pixelForClose));
-        ctx.strokeStyle = color;
-        ctx.stroke();
-    }
-
-    isHovering(overX: number): boolean {
-        return overX >= this.xStart && overX <= this.xStart + this.width;
-    }
-}
-// ---Bar END--- //
-
-// ---DataLoader START--- //
-interface DataLoaderConfig {
-    broker: string;
-    symbol: string;
-    timeframe: number;
-    start: number;
-    end: number;
-    useMessagePack?: boolean;
-}
-
-class DataLoader {
-    private static readonly BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';
-    private broker: string;
-    private symbol: string;
-    private timeframe: number;
-    private start: number;
-    private end: number;
-    private useMessagePack: boolean;
-
-    constructor({ broker, symbol, timeframe, start, end, useMessagePack = false }: DataLoaderConfig) {
-        this.broker = broker;
-        this.symbol = symbol;
-        this.timeframe = timeframe;
-        this.start = start;
-        this.end = end;
-        this.useMessagePack = useMessagePack;
-    }
-
-    public async loadData(symbol: string): Promise<any> {
-        this.symbol = symbol;
-
-        const url = `${DataLoader.BASE_URL}?Broker=${encodeURIComponent(this.broker)}&` +
-            `Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&` +
-            `Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    }
-}
-// ---DataLoader END--- //
-
-// ---Chunk START--- //
-interface Chunk {
-    ChunkStart: number;
-    Bars: BarData[];
-}
-
-interface ChunkData extends Array<Chunk> {}
-// ---Chunk END--- //
-
-// ---Chart START--- //
-class Chart {
+export class Chart {
     private bars: Bar[] = [];
     private dataLoader: DataLoader;
     private canvas: HTMLCanvasElement;
@@ -194,8 +92,8 @@ class Chart {
     }
 
     private processData(chunks: ChunkData): void {
-        const globalStartTime = Math.min(...chunks.map(chunk => chunk.ChunkStart));
-        this.bars = chunks.flatMap(chunk => chunk.Bars.map(barData => new Bar(
+        const globalStartTime = Math.min(...chunks.map((chunk: { ChunkStart: any; }) => chunk.ChunkStart));
+        this.bars = chunks.flatMap((chunk: { Bars: any[]; ChunkStart: any; }) => chunk.Bars.map(barData => new Bar(
             new Date((chunk.ChunkStart + barData.Time) * 1000),
             barData.Open,
             barData.High,
@@ -437,8 +335,3 @@ class Chart {
         this.draw();
     }
 }
-// ---Chart END--- //
-
-const chart = new Chart('chartCanvas', 'Advanced', 'EURUSD', 1, 57674, 59113);
-document.getElementById('marketUSDJPY').addEventListener('click', () => chart.changeMarket('USDJPY'));
-document.getElementById('marketEURUSD').addEventListener('click', () => chart.changeMarket('EURUSD'));
