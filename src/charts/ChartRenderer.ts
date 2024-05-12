@@ -187,5 +187,11 @@ export class ChartRenderer {
             xPosition += this.ctx.measureText(text).width + (index < barDetails.length - 1 ? spacing : 0);
         });
     }
+
+    public displayMessage(message: string): void {
+        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this.ctx.font = ChartRenderer.TEXT_FONT;
+        this.ctx.fillText(message, this.canvas.width / 2 - this.ctx.measureText(message).width / 2, this.canvas.height / 2);
+    }
 }
 

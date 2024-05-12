@@ -1,16 +1,16 @@
-import {DataLoader} from "../services/DataLoader";
-import {ChartData} from "./ChartData";
-import {ChartInteraction} from "./ChartInteraction";
-import {ChartRenderer} from "./ChartRenderer";
-import {UIController} from "../utils/UIController";
+import { DataLoader } from "../services/DataLoader";
+import { ChartData } from "./ChartData";
+import { ChartInteraction } from "./ChartInteraction";
+import { ChartRenderer } from "./ChartRenderer";
+import { UIController } from "../utils/UIController";
 
 export class MainChart {
     private renderer: ChartRenderer;
     private dataController: ChartData;
     private eventManager: ChartInteraction;
+    private uiController: UIController;
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private uiController: UIController;
     private symbol: string = 'EURUSD';
 
     constructor(canvasId: string, dataLoader: DataLoader) {
@@ -19,11 +19,10 @@ export class MainChart {
         this.dataController = new ChartData(dataLoader);
         this.renderer = new ChartRenderer(this.ctx, this.canvas, this.dataController);
         this.eventManager = new ChartInteraction(this.canvas, this.renderer);
-        this.uiController = new UIController(this.canvas);
+        this.uiController = new UIController();
     }
 
     async initialize(): Promise<void> {
-        this.uiController.updateLayout()
         await this.loadAndDraw();
     }
 
@@ -36,8 +35,8 @@ export class MainChart {
 
     private async loadAndDraw(): Promise<void> {
         let timeoutId: number = window.setTimeout(() => {
-            this.displayLoadingMessage("Loading data...");
-        }, 1000);
+            this.renderer.displayMessage("Loading data...");
+        }, 100);
 
         try {
             await this.dataController.loadData(this.symbol);
@@ -45,22 +44,10 @@ export class MainChart {
             this.render();
         } catch (error) {
             console.error("Data loading failed:", error);
-            this.displayLoadingMessage("Failed to load data.");
+            this.renderer.displayMessage("Failed to load data.");
         } finally {
             window.clearTimeout(timeoutId);
-            this.clearLoadingMessage();
         }
-    }
-
-    private displayLoadingMessage(message: string): void {
-        this.ctx.fillStyle = '#FFFFFF';
-        this.ctx.font = '16px Arial';
-        this.ctx.fillText(message, this.canvas.width / 2 - this.ctx.measureText(message).width / 2, this.canvas.height / 2);
-    }
-
-    private clearLoadingMessage(): void {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.render();
     }
 
     private render(): void {

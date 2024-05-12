@@ -1,15 +1,16 @@
 export class UIController {
     private canvas: HTMLCanvasElement;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas?: HTMLCanvasElement) {
         this.canvas = canvas;
+        this.handleScreenSizeChange();
     }
 
     private isSmallScreen() {
         return window.innerWidth < 800 || window.innerHeight < 600;
     }
 
-    updateLayout(): void {
+    private handleScreenSizeChange(): void {
         if (this.isSmallScreen()) {
             alert("The mobile version of this page is not available. Please access this page from a desktop.");
 
