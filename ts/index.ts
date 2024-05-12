@@ -55,19 +55,49 @@ interface Chunk {
 
 interface ChunkData extends Array<Chunk> {}
 
-class DataLoader {
-    constructor(private baseUrl: string, private broker: string, private symbol: string, private timeframe: number, private start: number, private end: number, private useMessagePack: boolean = false) {}
+// ---DataLoader START--- //
+interface DataLoaderConfig {
+    broker: string;
+    symbol: string;
+    timeframe: number;
+    start: number;
+    end: number;
+    useMessagePack?: boolean;
+}
 
-    public async loadData(symbol: string): Promise<ChunkData> {
+class DataLoader {
+    private static readonly BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';
+    private broker: string;
+    private symbol: string;
+    private timeframe: number;
+    private start: number;
+    private end: number;
+    private useMessagePack: boolean;
+
+    constructor({ broker, symbol, timeframe, start, end, useMessagePack = false }: DataLoaderConfig) {
+        this.broker = broker;
         this.symbol = symbol;
-        const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
+        this.timeframe = timeframe;
+        this.start = start;
+        this.end = end;
+        this.useMessagePack = useMessagePack;
+    }
+
+    public async loadData(symbol: string): Promise<any> {
+        this.symbol = symbol;
+
+        const url = `${DataLoader.BASE_URL}?Broker=${encodeURIComponent(this.broker)}&` +
+            `Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&` +
+            `Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
         const response = await fetch(url);
+
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         return response.json();
     }
 }
+// ---DataLoader END--- //
 
 class Chart {
     private bars: Bar[] = [];
@@ -99,7 +129,7 @@ class Chart {
 
         this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
-        this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
+        this.dataLoader = new DataLoader({broker, symbol, timeframe, start, end});
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
         this.initialize();
     }

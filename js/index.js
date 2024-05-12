@@ -31,8 +31,7 @@ class Bar {
     }
 }
 class DataLoader {
-    constructor(baseUrl, broker, symbol, timeframe, start, end, useMessagePack = false) {
-        this.baseUrl = baseUrl;
+    constructor({ broker, symbol, timeframe, start, end, useMessagePack = false }) {
         this.broker = broker;
         this.symbol = symbol;
         this.timeframe = timeframe;
@@ -42,7 +41,9 @@ class DataLoader {
     }
     async loadData(symbol) {
         this.symbol = symbol;
-        const url = `${this.baseUrl}?Broker=${encodeURIComponent(this.broker)}&Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
+        const url = `${DataLoader.BASE_URL}?Broker=${encodeURIComponent(this.broker)}&` +
+            `Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&` +
+            `Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
         const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -50,6 +51,8 @@ class DataLoader {
         return response.json();
     }
 }
+DataLoader.BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';
+// ---DataLoader END--- //
 class Chart {
     constructor(canvasId, broker, symbol, timeframe, start, end) {
         this.bars = [];
@@ -138,7 +141,7 @@ class Chart {
         }
         this.canvas = document.getElementById(canvasId);
         this.ctx = this.canvas.getContext('2d');
-        this.dataLoader = new DataLoader('https://beta.forextester.com/data/api/Metadata/bars/chunked', broker, symbol, timeframe, start, end);
+        this.dataLoader = new DataLoader({ broker, symbol, timeframe, start, end });
         this.visibleBars = Math.floor(this.canvas.width / this.barWidth);
         this.initialize();
     }
