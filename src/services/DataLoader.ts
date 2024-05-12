@@ -1,4 +1,4 @@
-import { DataLoaderConfig } from '../models';
+import { DataLoaderConfig } from '../models/DataLoaderConfig';
 
 export class DataLoader {
     private static readonly BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';

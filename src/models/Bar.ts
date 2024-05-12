@@ -21,7 +21,7 @@ export class Bar {
         public timeOffset: number
     ) {}
 
-    draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string): void {
+    public draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string): void {
         const candleWidth = maxWidth * 0.6;
         this.xStart = x;
         this.width = candleWidth;
