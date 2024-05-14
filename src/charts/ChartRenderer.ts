@@ -8,37 +8,38 @@ export class ChartRenderer {
     private static readonly SCALE_COLOR = '#666';
     private static readonly TEXT_COLOR = '#FFFFFF';
     private static readonly TEXT_FONT = '12px Arial';
-    private ctx: CanvasRenderingContext2D;
-    private canvas: HTMLCanvasElement;
-    private chartData: ChartData;
-    private hoveredBar: Bar | null = null;
-    private barWidth: number = 15;
-    private offsetX: number = 0;
+    private _ctx: CanvasRenderingContext2D;
+    private _canvas: HTMLCanvasElement;
+    private _chartData: ChartData;
+    private _hoveredBar: Bar | null = null;
+    private _barWidth: number = 15;
+    private _offsetX: number = 0;
 
     constructor(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, chartData: ChartData) {
-        this.ctx = ctx;
-        this.canvas = canvas;
-        this.chartData = chartData;
+        this._ctx = ctx;
+        this._canvas = canvas;
+        this._chartData = chartData;
     }
 
-    public getBarWidth(): number {
-        return this.barWidth;
+
+    get barWidth(): number {
+        return this._barWidth;
     }
 
-    public setBarWidth(barWidth: number): void {
-        this.barWidth = barWidth;
+    set barWidth(barWidth: number) {
+        this._barWidth = barWidth;
     }
 
-    public getOffsetX(): number {
-        return this.offsetX;
+    get offsetX(): number {
+        return this._offsetX;
     }
 
-    public setOffsetX(offsetX: number): void {
-        this.offsetX = offsetX;
+    set offsetX(offsetX: number) {
+        this._offsetX = offsetX;
     }
 
-    public getBarLength(): number {
-        return this.chartData.getBars().length;
+    get barLength(): number {
+        return this._chartData.bars.length;
     }
 
     public render(mouseX?: number, mouseY?: number) {
@@ -50,121 +51,121 @@ export class ChartRenderer {
 
         if (mouseX !== undefined && mouseY !== undefined) {
             this.drawCrosshair(mouseX, mouseY);
-            this.hoveredBar = this.chartData.getBars().find(bar => bar.isHovering(mouseX));
-            this.hoveredBar && this.displayBarInfo(this.hoveredBar);
+            this._hoveredBar = this._chartData.bars.find(bar => bar.isHovering(mouseX));
+            this._hoveredBar && this.displayBarInfo(this._hoveredBar);
         } else {
-            this.hoveredBar = null;
+            this._hoveredBar = null;
         }
     }
 
     private clearCanvas() {
-        this.ctx.fillStyle = ChartRenderer.CANVAS_BACKGROUND_COLOR;
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        this._ctx.fillStyle = ChartRenderer.CANVAS_BACKGROUND_COLOR;
+        this._ctx.fillRect(0, 0, this._canvas.width, this._canvas.height);
     }
 
     private drawGrid() {
         const gridSpacingX = 100;
         const gridSpacingY = 50;
 
-        this.ctx.strokeStyle = ChartRenderer.GRID_COLOR;
-        this.ctx.lineWidth = 1;
-        this.drawLines(this.canvas.width, gridSpacingX, true);
-        this.drawLines(this.canvas.height, gridSpacingY, false);
+        this._ctx.strokeStyle = ChartRenderer.GRID_COLOR;
+        this._ctx.lineWidth = 1;
+        this.drawLines(this._canvas.width, gridSpacingX, true);
+        this.drawLines(this._canvas.height, gridSpacingY, false);
     }
 
     private drawLines(limit: number, spacing: number, isVertical: boolean) {
         for (let pos = 0; pos <= limit; pos += spacing) {
-            this.ctx.beginPath();
+            this._ctx.beginPath();
             if (isVertical) {
-                this.ctx.moveTo(pos, 0);
-                this.ctx.lineTo(pos, this.canvas.height);
+                this._ctx.moveTo(pos, 0);
+                this._ctx.lineTo(pos, this._canvas.height);
             } else {
-                this.ctx.moveTo(0, pos);
-                this.ctx.lineTo(this.canvas.width, pos);
+                this._ctx.moveTo(0, pos);
+                this._ctx.lineTo(this._canvas.width, pos);
             }
-            this.ctx.stroke();
+            this._ctx.stroke();
         }
     }
 
     private drawBars() {
-        const bars = this.chartData.getBars();
+        const bars = this._chartData.bars;
         const yMax = Math.max(...bars.map(bar => bar.high));
         const yMin = Math.min(...bars.map(bar => bar.low));
         const yRange = yMax - yMin;
-        const yScale = this.canvas.height / yRange;
+        const yScale = this._canvas.height / yRange;
         const totalBars = bars.length;
-        const availableWidth = this.canvas.width;
+        const availableWidth = this._canvas.width;
 
-        const totalBarSpace = totalBars * this.barWidth;
+        const totalBarSpace = totalBars * this._barWidth;
         const maxOffsetX = Math.max(0, totalBarSpace - availableWidth);
-        this.offsetX = Math.max(0, Math.min(this.offsetX, maxOffsetX));
+        this._offsetX = Math.max(0, Math.min(this._offsetX, maxOffsetX));
 
-        const startIndex = Math.floor(this.offsetX / this.barWidth);
-        const endIndex = Math.min(totalBars, startIndex + Math.floor(availableWidth / this.barWidth));
+        const startIndex = Math.floor(this._offsetX / this._barWidth);
+        const endIndex = Math.min(totalBars, startIndex + Math.floor(availableWidth / this._barWidth));
 
         for (let i = startIndex; i < endIndex; i++) {
             const bar = bars[i];
-            const xPosition = (i - startIndex) * this.barWidth - (this.offsetX % this.barWidth);
+            const xPosition = (i - startIndex) * this._barWidth - (this._offsetX % this._barWidth);
             const color = bar.close > bar.open ? 'green' : 'red';
-            bar.draw(this.ctx, xPosition, yScale, yMax, this.barWidth, color);
+            bar.draw(this._ctx, xPosition, yScale, yMax, this._barWidth, color);
         }
     }
 
     private drawTimeFrame() {
-        const bars = this.chartData.getBars();
-        const barSpacing = Math.max(this.barWidth, 1);
+        const bars = this._chartData.bars;
+        const barSpacing = Math.max(this._barWidth, 1);
         const skipTicks = Math.floor(150 / barSpacing);
-        const startIndex = Math.floor(this.offsetX / this.barWidth);
-        const endIndex = Math.min(bars.length, startIndex + Math.floor(this.canvas.width / this.barWidth));
+        const startIndex = Math.floor(this._offsetX / this._barWidth);
+        const endIndex = Math.min(bars.length, startIndex + Math.floor(this._canvas.width / this._barWidth));
 
-        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
-        this.ctx.font = ChartRenderer.TEXT_FONT;
-        this.ctx.textAlign = 'center';
+        this._ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this._ctx.font = ChartRenderer.TEXT_FONT;
+        this._ctx.textAlign = 'center';
 
         for (let i = startIndex; i < endIndex; i += skipTicks) {
             const bar = bars[i];
-            const xPosition = (i - startIndex) * this.barWidth - (this.offsetX % this.barWidth) + this.barWidth / 2;
+            const xPosition = (i - startIndex) * this._barWidth - (this._offsetX % this._barWidth) + this._barWidth / 2;
             const date = new Date(bar.dateTime);
             const formattedTime = `${date.getHours()}:${date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()}`;
 
-            this.ctx.fillText(formattedTime, xPosition, this.canvas.height - 10);
+            this._ctx.fillText(formattedTime, xPosition, this._canvas.height - 10);
         }
     }
 
     private drawCrosshair(x: number, y: number) {
-        this.ctx.beginPath();
-        this.ctx.strokeStyle = ChartRenderer.CROSSHAIR_COLOR;
-        this.ctx.setLineDash([5, 5]);
-        this.ctx.moveTo(x, 0);
-        this.ctx.lineTo(x, this.canvas.height);
-        this.ctx.moveTo(0, y);
-        this.ctx.lineTo(this.canvas.width, y);
-        this.ctx.stroke();
-        this.ctx.setLineDash([]);
+        this._ctx.beginPath();
+        this._ctx.strokeStyle = ChartRenderer.CROSSHAIR_COLOR;
+        this._ctx.setLineDash([5, 5]);
+        this._ctx.moveTo(x, 0);
+        this._ctx.lineTo(x, this._canvas.height);
+        this._ctx.moveTo(0, y);
+        this._ctx.lineTo(this._canvas.width, y);
+        this._ctx.stroke();
+        this._ctx.setLineDash([]);
     }
 
     private drawPriceScale() {
-        const bars = this.chartData.getBars();
+        const bars = this._chartData.bars;
         const yMax = Math.max(...bars.map(bar => bar.high));
         const yMin = Math.min(...bars.map(bar => bar.low));
         const range = yMax - yMin;
         const scaleSteps = 5;
         const stepValue = range / scaleSteps;
 
-        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
-        this.ctx.font = ChartRenderer.TEXT_FONT;
+        this._ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this._ctx.font = ChartRenderer.TEXT_FONT;
 
         for (let i = 0; i <= scaleSteps; i++) {
             const price = yMin + i * stepValue;
-            const y = this.canvas.height - ((price - yMin) / range) * this.canvas.height;
+            const y = this._canvas.height - ((price - yMin) / range) * this._canvas.height;
 
-            this.ctx.fillText(price.toFixed(4), 30, y);
+            this._ctx.fillText(price.toFixed(4), 30, y);
 
-            this.ctx.beginPath();
-            this.ctx.moveTo(70, y);
-            this.ctx.lineTo(this.canvas.width, y);
-            this.ctx.strokeStyle = ChartRenderer.SCALE_COLOR;
-            this.ctx.stroke();
+            this._ctx.beginPath();
+            this._ctx.moveTo(70, y);
+            this._ctx.lineTo(this._canvas.width, y);
+            this._ctx.strokeStyle = ChartRenderer.SCALE_COLOR;
+            this._ctx.stroke();
         }
     }
 
@@ -176,22 +177,22 @@ export class ChartRenderer {
         ];
 
         const edgePadding = 200;
-        const totalTextWidth = barDetails.reduce((totalWidth, text) => totalWidth + this.ctx.measureText(text).width, 0);
-        const remainingSpace = this.canvas.width - totalTextWidth - edgePadding * 2;
+        const totalTextWidth = barDetails.reduce((totalWidth, text) => totalWidth + this._ctx.measureText(text).width, 0);
+        const remainingSpace = this._canvas.width - totalTextWidth - edgePadding * 2;
         const spacing = remainingSpace / (barDetails.length - 1);
 
         let xPosition = edgePadding;
         barDetails.forEach((text, index) => {
-            this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
-            this.ctx.fillText(text, xPosition, this.canvas.height - 50);
-            xPosition += this.ctx.measureText(text).width + (index < barDetails.length - 1 ? spacing : 0);
+            this._ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+            this._ctx.fillText(text, xPosition, this._canvas.height - 50);
+            xPosition += this._ctx.measureText(text).width + (index < barDetails.length - 1 ? spacing : 0);
         });
     }
 
     public displayMessage(message: string): void {
-        this.ctx.fillStyle = ChartRenderer.TEXT_COLOR;
-        this.ctx.font = ChartRenderer.TEXT_FONT;
-        this.ctx.fillText(message, this.canvas.width / 2 - this.ctx.measureText(message).width / 2, this.canvas.height / 2);
+        this._ctx.fillStyle = ChartRenderer.TEXT_COLOR;
+        this._ctx.font = ChartRenderer.TEXT_FONT;
+        this._ctx.fillText(message, this._canvas.width / 2 - this._ctx.measureText(message).width / 2, this._canvas.height / 2);
     }
 }
 

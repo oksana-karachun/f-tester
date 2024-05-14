@@ -1,20 +1,20 @@
 import { ChartRenderer } from "./ChartRenderer";
 
 export class ChartInteraction {
-    private canvas: HTMLCanvasElement;
-    private chartRenderer: ChartRenderer;
     private readonly zoomIntensity: number = 0.1;
     private readonly scrollIntensity: number = 30;
     private readonly throttleInterval: number = 50;
-    private lastMousePosition: { x: number | null; y: number | null } = { x: null, y: null };
-    private dragging: boolean = false;
-    private dragStartX: number = 0;
-    private dragOffsetX: number = 0;
-    private lastExecutionTime: number = 0;
+    private _canvas: HTMLCanvasElement;
+    private _chartRenderer: ChartRenderer;
+    private _lastMousePosition: { x: number | null; y: number | null } = { x: null, y: null };
+    private _dragging: boolean = false;
+    private _dragStartX: number = 0;
+    private _dragOffsetX: number = 0;
+    private _lastExecutionTime: number = 0;
 
     constructor(canvas: HTMLCanvasElement, chartRenderer: ChartRenderer) {
-        this.canvas = canvas;
-        this.chartRenderer = chartRenderer;
+        this._canvas = canvas;
+        this._chartRenderer = chartRenderer;
         this.resizeCanvas();
         window.onload = () => this.resizeCanvas();
         window.onresize = () => this.resizeCanvas();
@@ -22,22 +22,22 @@ export class ChartInteraction {
     }
 
     private attachEventHandlers() {
-        this.canvas.addEventListener('resize', this.resizeCanvas);
-        this.canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
-        this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
-        this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        this.canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
-        this.canvas.addEventListener('wheel', this.handleWheel.bind(this));
+        this._canvas.addEventListener('resize', this.resizeCanvas);
+        this._canvas.addEventListener('mousemove', this.handleMouseMove.bind(this));
+        this._canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+        this._canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+        this._canvas.addEventListener('mouseleave', this.handleMouseLeave.bind(this));
+        this._canvas.addEventListener('wheel', this.handleWheel.bind(this));
     }
 
     private resizeCanvas(): void {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight - 50;
-        this.chartRenderer.render();
+        this._canvas.width = window.innerWidth;
+        this._canvas.height = window.innerHeight - 50;
+        this._chartRenderer.render();
     }
 
     private handleZoom(deltaY: number): number {
-        const barWidth = this.chartRenderer.getBarWidth();
+        const barWidth = this._chartRenderer.barWidth;
         const zoomFactor = deltaY < 0 ? 1 + this.zoomIntensity : 1 - this.zoomIntensity;
         const newWidth = barWidth * zoomFactor;
 
@@ -45,8 +45,8 @@ export class ChartInteraction {
     }
 
     private handleScroll(deltaX: number): number {
-        const currentOffsetX = this.chartRenderer.getOffsetX();
-        const maxOffsetX = this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width;
+        const currentOffsetX = this._chartRenderer.offsetX;
+        const maxOffsetX = this._chartRenderer.barLength * this._chartRenderer.barWidth - this._canvas.width;
 
         return deltaX < 0
             ? Math.max(0, currentOffsetX - this.scrollIntensity)
@@ -56,59 +56,59 @@ export class ChartInteraction {
     private handleWheel(event: WheelEvent): void {
 
         const now = Date.now();
-        if (now - this.lastExecutionTime < this.throttleInterval) return;
+        if (now - this._lastExecutionTime < this.throttleInterval) return;
 
         event.preventDefault();
         if (event.shiftKey) {
-            this.chartRenderer.setBarWidth(this.handleZoom(event.deltaY))
+            this._chartRenderer.barWidth = this.handleZoom(event.deltaY);
         } else {
-            this.chartRenderer.setOffsetX(this.handleScroll(event.deltaX));
+            this._chartRenderer.offsetX = this.handleScroll(event.deltaX);
         }
 
-        this.lastExecutionTime = now;
-        window.requestAnimationFrame(() => this.chartRenderer.render());
+        this._lastExecutionTime = now;
+        window.requestAnimationFrame(() => this._chartRenderer.render());
     }
 
     private handleMouseDown = (event: MouseEvent) => {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
+        const rect = this._canvas.getBoundingClientRect();
+        const scaleX = this._canvas.width / rect.width;
         const mouseX = (event.clientX - rect.left) * scaleX;
 
-        this.dragging = true;
-        this.dragStartX = mouseX;
-        this.dragOffsetX = this.chartRenderer.getOffsetX();
-        this.canvas.style.cursor = 'grabbing';
+        this._dragging = true;
+        this._dragStartX = mouseX;
+        this._dragOffsetX = this._chartRenderer.offsetX;
+        this._canvas.style.cursor = 'grabbing';
     };
 
     private handleMouseMove = (event: MouseEvent) => {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.canvas.width / rect.width;
-        const scaleY = this.canvas.height / rect.height;
+        const rect = this._canvas.getBoundingClientRect();
+        const scaleX = this._canvas.width / rect.width;
+        const scaleY = this._canvas.height / rect.height;
         const x = (event.clientX - rect.left) * scaleX;
         const y = (event.clientY - rect.top) * scaleY;
 
-        this.lastMousePosition.x = x;
-        this.lastMousePosition.y = y;
+        this._lastMousePosition.x = x;
+        this._lastMousePosition.y = y;
 
-        if (this.dragging) {
-            const dx = x - this.dragStartX;
-            const newOffsetX = this.dragOffsetX - dx;
-            const maxOffsetX = this.chartRenderer.getBarLength() * this.chartRenderer.getBarWidth() - this.canvas.width;
-            this.chartRenderer.setOffsetX(Math.max(0, Math.min(newOffsetX, maxOffsetX)));
+        if (this._dragging) {
+            const dx = x - this._dragStartX;
+            const newOffsetX = this._dragOffsetX - dx;
+            const maxOffsetX = this._chartRenderer.barLength * this._chartRenderer.barWidth - this._canvas.width;
+            this._chartRenderer.offsetX = Math.max(0, Math.min(newOffsetX, maxOffsetX));
         }
 
-        window.requestAnimationFrame(() => this.chartRenderer.render(x, y));
+        window.requestAnimationFrame(() => this._chartRenderer.render(x, y));
     }
 
     private handleMouseUp = () => {
-        this.dragging = false;
-        this.canvas.style.cursor = 'default';
+        this._dragging = false;
+        this._canvas.style.cursor = 'default';
     };
 
     private handleMouseLeave = () => {
-        this.dragging = false;
-        this.lastMousePosition.x = null;
-        this.lastMousePosition.y = null;
-        this.chartRenderer.render();
+        this._dragging = false;
+        this._lastMousePosition.x = null;
+        this._lastMousePosition.y = null;
+        this._chartRenderer.render();
     }
 }

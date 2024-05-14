@@ -2,28 +2,28 @@ import { DataLoaderConfig } from '../models/DataLoaderConfig';
 
 export class DataLoader {
     private static readonly BASE_URL = 'https://beta.forextester.com/data/api/Metadata/bars/chunked';
-    private broker: string;
-    private symbol: string;
-    private timeframe: number;
-    private start: number;
-    private end: number;
-    private useMessagePack: boolean;
+    private _broker: string;
+    private _symbol: string;
+    private _timeframe: number;
+    private _start: number;
+    private _end: number;
+    private _useMessagePack: boolean;
 
     constructor({ broker, symbol, timeframe, start, end, useMessagePack = false }: DataLoaderConfig) {
-        this.broker = broker;
-        this.symbol = symbol;
-        this.timeframe = timeframe;
-        this.start = start;
-        this.end = end;
-        this.useMessagePack = useMessagePack;
+        this._broker = broker;
+        this._symbol = symbol;
+        this._timeframe = timeframe;
+        this._start = start;
+        this._end = end;
+        this._useMessagePack = useMessagePack;
     }
 
     public async loadData(symbol: string): Promise<any> {
-        this.symbol = symbol;
+        this._symbol = symbol;
 
-        const url = `${DataLoader.BASE_URL}?Broker=${encodeURIComponent(this.broker)}&` +
-            `Symbol=${encodeURIComponent(this.symbol)}&Timeframe=${this.timeframe}&` +
-            `Start=${this.start}&End=${this.end}&UseMessagePack=${this.useMessagePack}`;
+        const url = `${DataLoader.BASE_URL}?Broker=${encodeURIComponent(this._broker)}&` +
+            `Symbol=${encodeURIComponent(this._symbol)}&Timeframe=${this._timeframe}&` +
+            `Start=${this._start}&End=${this._end}&UseMessagePack=${this._useMessagePack}`;
         const response = await fetch(url);
 
         if (!response.ok) {

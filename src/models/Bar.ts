@@ -8,8 +8,8 @@ export interface BarData {
 }
 
 export class Bar {
-    private xStart: number = 0;
-    private width: number = 0;
+    private _xStart: number = 0;
+    private _width: number = 0;
 
     constructor(
         public dateTime: Date,
@@ -23,8 +23,8 @@ export class Bar {
 
     public draw(ctx: CanvasRenderingContext2D, x: number, yScale: number, yMax: number, maxWidth: number, color: string): void {
         const candleWidth = maxWidth * 0.6;
-        this.xStart = x;
-        this.width = candleWidth;
+        this._xStart = x;
+        this._width = candleWidth;
 
         const pixelForHigh = (yMax - this.high) * yScale;
         const pixelForLow = (yMax - this.low) * yScale;
@@ -32,7 +32,7 @@ export class Bar {
         const pixelForClose = (yMax - this.close) * yScale;
 
         ctx.fillStyle = color;
-        ctx.fillRect(this.xStart, Math.min(pixelForOpen, pixelForClose), candleWidth, Math.abs(pixelForClose - pixelForOpen));
+        ctx.fillRect(this._xStart, Math.min(pixelForOpen, pixelForClose), candleWidth, Math.abs(pixelForClose - pixelForOpen));
 
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, pixelForHigh);
@@ -44,6 +44,6 @@ export class Bar {
     }
 
     isHovering(overX: number): boolean {
-        return overX >= this.xStart && overX <= this.xStart + this.width;
+        return overX >= this._xStart && overX <= this._xStart + this._width;
     }
 }
