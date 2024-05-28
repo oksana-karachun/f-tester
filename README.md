@@ -2,6 +2,9 @@
 
 ---
 
+<img width="1728" alt="image" src="https://github.com/oksana-karachun/f-tester/assets/127752273/5f241179-39ac-4379-9746-09f506275351">
+
+
 ## Prerequisites
 
 Before you begin, ensure you have met the following requirements:
